@@ -66,14 +66,14 @@ use IEEE.STD_LOGIC_1164.ALL;
 entity datapath is 
     port(
         i_clk : in STD_LOGIC,
-        i_res : in STD_LOGIC,
+        i_rst : in STD_LOGIC,
         address_enable : in STD_LOGIC,
         channell_enable : in STD_LOGIC,
         done : in STD_LOGIC,
         receive : in STD_LOGIC,
         i_w : in STD_LOGIC,
         i_mem_data : in STD_LOGIC_VECTOR (7 downto 0),
-        o_mem_address : out STD_LOGIC_VECTOR (15 downto 0),
+        o_mem_addr : out STD_LOGIC_VECTOR (15 downto 0),
         o_z1 : out STD_LOGIC_VECTOR (7 downto 0),
         o_z2 : out STD_LOGIC_VECTOR (7 downto 0),
         o_z3 : out STD_LOGIC_VECTOR (7 downto 0),
@@ -96,6 +96,37 @@ architecture Behavioral of datapath is
 
 
 begin
+
+    -- sommatore e moltiplicatore (esegue lo shift logico) per la creazione dell'indirizzo di memoria
+    sum_address <= ("000000000000000" & i_w) + (o_mem_addr * 2);
+    
+    -- registro dove viene salvato l'indirizzo di memoria
+    process(i_clk, i_rst)
+    begin
+        if(i_rst = '1') then
+            o_mem_addr <= "0000000000000000";
+        elsif i_clk'event and i_clk = '1' then
+            if(address_enable = '1') then
+                o_mem_addr <= sum_address;
+            end if;
+        end if;
+    
+    -- sommatore e moltiplicatore (esegue lo shift logico) per la creazione del selettore del canale di uscita
+    sum_channel <= ("0" & i_w) + (channel_selector * 2);
+
+    -- registro dove viene salvato il canale di uscita
+    process(i_clk, i_rst)
+    begin
+        if(i_rst = '1') then
+            channel_selector <= "00";
+        elsif i_clk'event and i_clk = '1' then
+            if(channel_enable = '1') then
+                channel_selector <= sum_channel;
+            end if;
+        end if;
+
+
+-- NON SO COME MAPPARE IL RETTANGOLO CON GLI 00, 01, 10, 11
 
 end Behavioral;
 
