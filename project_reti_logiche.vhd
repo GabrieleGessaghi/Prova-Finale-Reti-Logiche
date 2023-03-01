@@ -128,6 +128,10 @@ begin
 
 -- NON SO COME MAPPARE IL RETTANGOLO CON GLI 00, 01, 10, 11
 
+-- TO DO
+    -- reg z1, z2, z3 , z4
+    -- o_z1, o_z2, o_z3, o_z4
+
 end Behavioral;
 
 
