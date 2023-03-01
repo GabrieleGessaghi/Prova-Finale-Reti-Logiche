@@ -32,13 +32,68 @@ use IEEE.STD_LOGIC_1164.ALL;
 --use UNISIM.VComponents.all;
 
 
+-- DATAPATH in
+    -- i_clk
+    -- i_res
+    -- address_enable
+    -- channel_enable
+    -- done
+    -- receive
+    -- i_w
+    -- i_mem_data
+
+-- DATAPATH out
+    -- o_mem_address
+    -- o_z1
+    -- o_z2
+    -- o_z3
+    -- o_z4
+
+-- DATAPATH internal
+    -- sum_address
+    -- mult_address
+    -- sum_channel
+    -- channel_selector
+    -- mult_channel
+    -- reg_enable
+    -- o_reg_z1
+    -- o_reg_z2
+    -- o_reg_z3
+    -- o_reg_z4
+
+
+
 entity datapath is 
     port(
-
-    );
+        i_clk : in STD_LOGIC,
+        i_res : in STD_LOGIC,
+        address_enable : in STD_LOGIC,
+        channell_enable : in STD_LOGIC,
+        done : in STD_LOGIC,
+        receive : in STD_LOGIC,
+        i_w : in STD_LOGIC,
+        i_mem_data : in STD_LOGIC_VECTOR (7 downto 0),
+        o_mem_address : out STD_LOGIC_VECTOR (15 downto 0),
+        o_z1 : out STD_LOGIC_VECTOR (7 downto 0),
+        o_z2 : out STD_LOGIC_VECTOR (7 downto 0),
+        o_z3 : out STD_LOGIC_VECTOR (7 downto 0),
+        o_z4 : out STD_LOGIC_VECTOR (7 downto 0)
+        );
 end datapath;
 
 architecture Behavioral of datapath is
+
+    signal sum_address : STD_LOGIC_VECTOR (15 downto 0);
+    signal mult_address : STD_LOGIC_VECTOR (15 downto 0);
+    signal sum_channel : STD_LOGIC_VECTOR (1 downto 0);
+    signal channel_selector : STD_LOGIC_VECTOR (1 downto 0);
+    signal mult_channel : STD_LOGIC_VECTOR (1 downto 0);
+    signal reg_enable : STD_LOGIC;
+    signal o_reg_z1 : STD_LOGIC_VECTOR (7 downto 0);
+    signal o_reg_z2 : STD_LOGIC_VECTOR (7 downto 0);
+    signal o_reg_z3 : STD_LOGIC_VECTOR (7 downto 0);
+    signal o_reg_z4 : STD_LOGIC_VECTOR (7 downto 0);
+
 
 begin
 
