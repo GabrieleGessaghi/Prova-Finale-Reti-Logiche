@@ -22,7 +22,8 @@ USE IEEE.STD_LOGIC_1164.ALL;
 
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
+use IEEE.NUMERIC_STD.ALL;
+-- use IEEE.STD_LOGIC_UNSIGNED.all;
 
 -- Uncomment the following library declaration if instantiating
 -- any Xilinx leaf cells in this code.
@@ -95,36 +96,26 @@ ARCHITECTURE Behavioral OF project_reti_logiche IS
     SIGNAL state : state_type;
     SIGNAL next_state : state_type;
     SIGNAL receive : STD_LOGIC;
-    SIGNAL addr_rst : STD_LOGIC;
+    SIGNAL internal_rst : STD_LOGIC;
 BEGIN
 
-    -- sommatore e moltiplicatore (esegue lo shift logico) per la creazione dell'indirizzo di memoria
-    -- sum_address <= ("000000000000000" & i_w) + (o_mem_addr * 2); RIVEDI
-
-    -- registro dove viene salvato l'indirizzo di memoria
+    -- calcolo indirizzo, calcolo canale, output canale, output indirizzo
     PROCESS (i_clk, i_rst)
     BEGIN
-        IF (i_rst = '1') or addr_rst = '1' THEN
-            o_mem_addr <= "0000000000000000";
-        ELSIF rising_edge(i_clk) THEN
-            IF (addr_en = '1') THEN
-                o_mem_addr <= sum_address;
-            END IF;
-        END IF;
-
-        -- sommatore e moltiplicatore (esegue lo shift logico) per la creazione del selettore del canale di uscita
-        -- sum_channel <= ("0" & i_w) + (channel_selector * 2); RIVEDI
-    END PROCESS;
-
-    -- registro dove viene salvato il canale di uscita
-    PROCESS (i_clk, i_rst)
-    BEGIN
-        IF (i_rst = '1') THEN
-            channel_selector <= "00";
-        ELSIF i_clk'event AND i_clk = '1' THEN
-            IF (chan_en = '1') THEN
+        IF (i_rst = '1') or internal_rst = '1' THEN
+            channel_selector <= (others => '0');
+            o_mem_addr <= (others => '0');
+        ELSIF rising_edge(i_clk) and chan_en = '1' THEN
+            sum_channel <= ("0" & i_w); 
+            if state = S1 then
+                sum_channel <= std_logic_vector(unsigned(sum_channel) sll 1); -- shift logico sx del canale
+            else
                 channel_selector <= sum_channel;
-            END IF;
+            end if;
+        ELSIF rising_edge(i_clk) and addr_en = '1' THEN
+            sum_address <= std_logic_vector(unsigned(sum_address) sll 1); -- shift logico sx del canale
+            sum_address(0) <= i_w;
+            o_mem_addr <= sum_address;
         END IF;
     END PROCESS;
 
@@ -146,6 +137,7 @@ BEGIN
     BEGIN
         CASE state IS
             when S0 =>
+                internal_rst <= '0';
                 if i_start = '1' then 
                     next_state <= S1;
                 end if;
@@ -176,7 +168,7 @@ BEGIN
                 next_state <= S6;
             when S6 => -- espone risultati, resetta addr register
                 o_done <= '1';
-                addr_rst <= '1';
+                internal_rst <= '1';
                 next_state <= S0;         
         END CASE;
     END PROCESS;
