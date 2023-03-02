@@ -54,6 +54,7 @@ ARCHITECTURE Behavioral OF project_reti_logiche IS
     SIGNAL receive : STD_LOGIC;
     SIGNAL internal_rst : STD_LOGIC;
     SIGNAL temp_done : STD_LOGIC;
+    signal ingresso : std_logic;
     
     SIGNAL reg_z0 : STD_LOGIC_VECTOR (7 DOWNTO 0);
     SIGNAL reg_z1 : STD_LOGIC_VECTOR (7 DOWNTO 0);
@@ -66,26 +67,29 @@ ARCHITECTURE Behavioral OF project_reti_logiche IS
     
 BEGIN
     
-    -- calcolo indirizzo, calcolo canale, output canale, output indirizzo
-    PROCESS (i_clk, i_rst)
+    PROCESS(i_clk)
+    begin
+        ingresso <= i_w;
+    end process;
+    
+    PROCESS (i_clk, i_rst, internal_rst, addr_en) -- processo calcolo address
     BEGIN
         IF (i_rst = '1') or internal_rst = '1' THEN
             o_mem_addr <= (others => '0');
-        ELSIF rising_edge(i_clk) and addr_en = '1' THEN
+        ELSIF falling_edge(i_clk) and addr_en = '1' THEN
             sum_address <= std_logic_vector(unsigned(sum_address) sll 1); -- shift logico sx del canale
-            sum_address(0) <= i_w;
-            o_mem_addr <= sum_address;
+            sum_address(0) <= '1';--ingresso;
         END IF;
     END PROCESS;
+    o_mem_addr <= sum_address;
 
-    PROCESS (i_clk, i_rst)
+    PROCESS (i_clk, i_rst, internal_rst, chan_en) -- processo selezione canale di uscita
     BEGIN
         IF (i_rst = '1') or internal_rst = '1' THEN
             channel_selector <= (others => '0');
-        ELSIF rising_edge(i_clk) and chan_en = '1' THEN
+        ELSIF falling_edge(i_clk) and chan_en = '1' THEN
             channel_selector <= std_logic_vector(unsigned(channel_selector) sll 1); -- shift logico sx del canale
-            channel_selector(0) <= i_w;
-            --o_mem_addr <= sum_address;
+            channel_selector(0) <= '1'; --ingresso;
         END IF;
     END PROCESS;
 
@@ -128,7 +132,7 @@ BEGIN
     PROCESS (i_clk, i_rst) -- aggiornatore FSM
     BEGIN 
         if i_rst = '1' then state <= S0;
-        elsif rising_edge(i_clk) then state <= next_state;
+        elsif falling_edge(i_clk) then state <= next_state;
         end if;
     
     END PROCESS;
@@ -144,30 +148,45 @@ BEGIN
     
         CASE state IS
             when S0 =>
+                -- non lascio casi scoperti
+            when S1 => -- legge primo bit canale
+                chan_en <= '1';
+            when S2 => -- legge secondo bit di indirizzo
+                chan_en <= '1';
+
+            when S3 => -- legge indirizzo bit a bit
+                    addr_en <= '1';
+            when S4 => -- trasmette indirizzo
+                o_mem_en <= '1';
+            when S5 => -- ricevi data da memoria
+                receive <= '1';
+            when S6 => -- espone risultati, resetta addr register
+                temp_done <= '1';
+                internal_rst <= '1';
+        END CASE;
+    END PROCESS;
+
+    PROCESS (i_clk, i_rst) --FSM
+    BEGIN
+        CASE state IS
+            when S0 =>
                 if i_start = '1' then 
                     next_state <= S1;
                 end if;
             when S1 => -- legge primo bit canale
-                chan_en <= '1';
                 next_state <= S2;
             when S2 => -- legge secondo bit di indirizzo
-                chan_en <= '1';
                 next_state <= S3;
             when S3 => -- legge indirizzo bit a bit
                 if i_start = '1' then 
-                    addr_en <= '1';
                     next_state <= S3;
                 else next_state <= S4;
                 end if;
             when S4 => -- trasmette indirizzo
-                o_mem_en <= '1';
                 next_state <= S5;
             when S5 => -- ricevi data da memoria
-                receive <= '1';
                 next_state <= S6;
             when S6 => -- espone risultati, resetta addr register
-                temp_done <= '1';
-                internal_rst <= '1';
                 next_state <= S0;         
         END CASE;
     END PROCESS;
