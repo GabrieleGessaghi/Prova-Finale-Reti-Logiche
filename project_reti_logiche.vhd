@@ -52,6 +52,11 @@ ARCHITECTURE Behavioral OF project_reti_logiche IS
     SIGNAL addr_en : STD_LOGIC;
     SIGNAL chan_en : STD_LOGIC;
     SIGNAL receive : STD_LOGIC;
+    -- ch_enable pack
+    SIGNAL ch0_en : STD_LOGIC;
+    SIGNAL ch1_en : STD_LOGIC;
+    SIGNAL ch2_en : STD_LOGIC;
+    SIGNAL ch3_en : STD_LOGIC;
     SIGNAL internal_rst : STD_LOGIC;
     SIGNAL temp_done : STD_LOGIC;
     signal ingresso : std_logic;
@@ -104,15 +109,38 @@ BEGIN
             reg_z1 <= "00000000";
             reg_z2 <= "00000000";
             reg_z3 <= "00000000";
-        elsif receive = '1' and channel_selector = "00" then 
-            reg_z0 <= i_mem_data;
-        elsif receive = '1' and channel_selector = "01" then 
-            reg_z1 <= i_mem_data;
-        elsif receive = '1' and channel_selector = "10" then 
-            reg_z2 <= i_mem_data;
-        elsif receive = '1' and channel_selector = "11" then 
-            reg_z3 <= i_mem_data;
+        else 
+            --if receive = '1' then
+                if ch0_en = '1' then 
+                    reg_z0 <= i_mem_data; 
+                elsif ch1_en = '1' then 
+                    reg_z1 <= i_mem_data;
+                elsif ch2_en = '1' then 
+                    reg_z2 <= i_mem_data;
+                elsif ch3_en = '1' then 
+                    reg_z3 <= i_mem_data;
+                end if;
+            --end if;
         end if;
+    end process;
+    
+    process(i_clk, receive) -- selezione canale uscita ed enabler mux
+    begin
+        ch0_en <= '0'; 
+        ch1_en <= '0'; 
+        ch2_en <= '0'; 
+        ch3_en <= '0'; 
+        if receive = '1' then
+            if channel_selector = "00" then 
+                ch0_en <= '1'; 
+            elsif channel_selector = "01" then 
+                ch1_en <= '1'; 
+            elsif channel_selector = "10" then 
+                ch2_en <= '1'; 
+            elsif channel_selector = "11" then 
+                ch3_en <= '1'; 
+            end if;
+       end if;
     end process;
     
 
@@ -202,3 +230,18 @@ BEGIN
     
     o_done <= temp_done;
 END Behavioral;
+
+X GESSA: al momento il codice esegue senza problemi la Behavioural. Post sintesi si blocca sul check di 162 in 0_z2. 
+Ti ricordo di usare il testbench esempio 2023 e non gli altri (almeno facciamone andare prima uno bene). 
+
+Nello schema del circuito ho sistemato la parte relativa ai registri ma non le uscite, infatti noterai una quantità infinita di mux, 
+dovrebbero essere molti ma molti meno (- boh), in più ci sono 4 LATCH_REG che sono il male (su internet ho trovato qualche modo per toglierli
+ma al momento non ha funzionato niente). 
+
+Prioritario è passare la functional simulazion e sistemare il circuito
+
+──▒▒▒▒▒▒───▄████▄
+─▒─▄▒─▄▒──███▄█▀ 
+─▒▒▒▒▒▒▒─▐████──█─█ 
+─▒▒▒▒▒▒▒──█████▄
+─▒─▒─▒─▒───▀████▀
