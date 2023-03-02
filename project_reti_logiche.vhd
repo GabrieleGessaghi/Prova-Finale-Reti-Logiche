@@ -81,11 +81,11 @@ BEGIN
     PROCESS (i_clk, i_rst)
     BEGIN
         IF (i_rst = '1') or internal_rst = '1' THEN
-            o_mem_addr <= (others => '0');
-        ELSIF rising_edge(i_clk) and addr_en = '1' THEN
-            sum_address <= std_logic_vector(unsigned(sum_address) sll 1); -- shift logico sx del canale
-            sum_address(0) <= i_w;
-            o_mem_addr <= sum_address;
+            channel_selector <= (others => '0');
+        ELSIF rising_edge(i_clk) and chan_en = '1' THEN
+            channel_selector <= std_logic_vector(unsigned(channel_selector) sll 1); -- shift logico sx del canale
+            channel_selector(0) <= i_w;
+            --o_mem_addr <= sum_address;
         END IF;
     END PROCESS;
 
@@ -135,32 +135,32 @@ BEGIN
         
     PROCESS (i_clk, i_rst) --FSM
     BEGIN
+    o_mem_en <= '0';
+    addr_en <= '0';
+    chan_en <= '0';
+    internal_rst <= '0';
+    temp_done <= '0';
+    receive <= '0';
+    
         CASE state IS
             when S0 =>
-                internal_rst <= '0';
-                temp_done <= '0';
                 if i_start = '1' then 
                     next_state <= S1;
                 end if;
             when S1 => -- legge primo bit canale
-                addr_en <= '0';
                 chan_en <= '1';
                 next_state <= S2;
             when S2 => -- legge secondo bit di indirizzo
-                addr_en <= '0';
                 chan_en <= '1';
                 next_state <= S3;
             when S3 => -- legge indirizzo bit a bit
                 if i_start = '1' then 
                     addr_en <= '1';
-                    chan_en <= '0';
                     next_state <= S3;
                 else next_state <= S4;
                 end if;
             when S4 => -- trasmette indirizzo
                 o_mem_en <= '1';
-                addr_en <= '0';
-                chan_en <= '0';
                 next_state <= S5;
             when S5 => -- ricevi data da memoria
                 receive <= '1';
