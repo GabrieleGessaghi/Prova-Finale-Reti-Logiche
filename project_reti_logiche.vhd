@@ -122,9 +122,14 @@ BEGIN
     END PROCESS;
 
     -- indirizzamento data su uscita indicata in channel
-    process (i_clk)
+    process (i_clk, i_rst)
     begin
-        if receive = '1' and channel_selector = "00" then 
+        if i_rst = '1' then
+            reg_z0 <= zero_reg;
+            reg_z1 <= zero_reg;
+            reg_z2 <= zero_reg;
+            reg_z3 <= zero_reg;
+        elsif receive = '1' and channel_selector = "00" then 
             reg_z0 <= i_mem_data;
         elsif receive = '1' and channel_selector = "01" then 
             reg_z1 <= i_mem_data;
@@ -165,6 +170,7 @@ BEGIN
         CASE state IS
             when S0 =>
                 internal_rst <= '0';
+                temp_done <= '0';
                 if i_start = '1' then 
                     next_state <= S1;
                 end if;
