@@ -69,27 +69,28 @@ BEGIN
     
     PROCESS(i_clk)
     begin
-        ingresso <= i_w;
+        if rising_edge(i_clk) then ingresso <= i_w; end if;
     end process;
     
-    PROCESS (i_clk, i_rst, internal_rst, addr_en) -- processo calcolo address
+    PROCESS (i_clk, i_rst, internal_rst) -- processo calcolo address
     BEGIN
         IF (i_rst = '1') or internal_rst = '1' THEN
-            o_mem_addr <= (others => '0');
+            sum_address <= (others => '0');
         ELSIF falling_edge(i_clk) and addr_en = '1' THEN
             sum_address <= std_logic_vector(unsigned(sum_address) sll 1); -- shift logico sx del canale
-            sum_address(0) <= '1';--ingresso;
+            sum_address(0) <= '1';
         END IF;
     END PROCESS;
+    
     o_mem_addr <= sum_address;
 
-    PROCESS (i_clk, i_rst, internal_rst, chan_en) -- processo selezione canale di uscita
+    PROCESS (i_clk, i_rst, internal_rst) -- processo selezione canale di uscita
     BEGIN
         IF (i_rst = '1') or internal_rst = '1' THEN
             channel_selector <= (others => '0');
         ELSIF falling_edge(i_clk) and chan_en = '1' THEN
             channel_selector <= std_logic_vector(unsigned(channel_selector) sll 1); -- shift logico sx del canale
-            channel_selector(0) <= '1'; --ingresso;
+            channel_selector(0) <= '1';
         END IF;
     END PROCESS;
 
@@ -132,7 +133,7 @@ BEGIN
     PROCESS (i_clk, i_rst) -- aggiornatore FSM
     BEGIN 
         if i_rst = '1' then state <= S0;
-        elsif falling_edge(i_clk) then state <= next_state;
+        elsif rising_edge(i_clk) then state <= next_state;
         end if;
     
     END PROCESS;
@@ -166,22 +167,28 @@ BEGIN
         END CASE;
     END PROCESS;
 
-    PROCESS (i_clk, i_rst) --FSM
+    PROCESS (i_clk, i_rst, i_start) --FSM
     BEGIN
+        next_state <= state; --c
         CASE state IS
             when S0 =>
+                next_state <= S0;
                 if i_start = '1' then 
                     next_state <= S1;
                 end if;
             when S1 => -- legge primo bit canale
                 next_state <= S2;
             when S2 => -- legge secondo bit di indirizzo
-                next_state <= S3;
+                -- next_state <= S3;
+                if i_start = '1' then next_state <= S3; 
+                else next_state <= S4; end if;
             when S3 => -- legge indirizzo bit a bit
-                if i_start = '1' then 
-                    next_state <= S3;
-                else next_state <= S4;
-                end if;
+                next_state <= S3;
+                if i_start = '0' then next_state <= S4; end if;
+                -- if i_start = '1' then 
+                 --   next_state <= S3;
+                --else next_state <= S4;
+                -- end if;
             when S4 => -- trasmette indirizzo
                 next_state <= S5;
             when S5 => -- ricevi data da memoria
