@@ -76,7 +76,7 @@ BEGIN
     BEGIN
         IF (i_rst = '1') or internal_rst = '1' THEN
             sum_address <= (others => '0');
-        ELSIF rising_edge(i_clk) and addr_en = '1' THEN -- RISING DIOCANE SENNO NON RISPETTA I TEMPI
+        ELSIF rising_edge(i_clk) and addr_en = '1' THEN
             -- sum_address <= std_logic_vector(unsigned(sum_address) sll 1); -- shift logico sx del canale
             -- sum_address(0) <= '1';
             sum_address <= sum_address(14 downto 0) & ingresso;
@@ -117,7 +117,7 @@ BEGIN
     
 
     -- gestione uscite con DONE
-    process(i_clk)
+    process(i_clk, temp_done)
     begin 
         if temp_done = '0' then
             o_z0 <= "00000000";
@@ -151,14 +151,14 @@ BEGIN
     
         CASE state IS
             when S0 =>
-                -- non lascio casi scoperti
+                temp_done <= '0';
+                internal_rst <= '0';
             when S1 => -- legge primo bit canale
                 chan_en <= '1';
             when S2 => -- legge secondo bit di indirizzo
                 chan_en <= '1';
-
             when S3 => -- legge indirizzo bit a bit
-                    addr_en <= '1';
+                addr_en <= '1';
             when S4 => -- trasmette indirizzo
                 o_mem_en <= '1';
             when S5 => -- ricevi data da memoria
