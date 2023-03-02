@@ -87,7 +87,6 @@ ARCHITECTURE Behavioral OF project_reti_logiche IS
     SIGNAL internal_rst : STD_LOGIC;
     SIGNAL temp_done : STD_LOGIC;
     
-    SIGNAL zero_reg : STD_LOGIC_VECTOR (7 DOWNTO 0); -- edit gabriele : secondo me non serve, puoi usare direttamente gli 0 (vedi sotto)
     SIGNAL reg_z0 : STD_LOGIC_VECTOR (7 DOWNTO 0);
     SIGNAL reg_z1 : STD_LOGIC_VECTOR (7 DOWNTO 0);
     SIGNAL reg_z2 : STD_LOGIC_VECTOR (7 DOWNTO 0);
@@ -98,8 +97,6 @@ ARCHITECTURE Behavioral OF project_reti_logiche IS
     SIGNAL next_state : state_type;
     
 BEGIN
-
-    zero_reg <= (others => '0'); -- si può togliere 
     
     -- calcolo indirizzo, calcolo canale, output canale, output indirizzo
     PROCESS (i_clk, i_rst)
@@ -125,10 +122,10 @@ BEGIN
     process (i_clk, i_rst)
     begin
         if i_rst = '1' then
-            reg_z0 <= zero_reg;
-            reg_z1 <= zero_reg;
-            reg_z2 <= zero_reg;
-            reg_z3 <= zero_reg;
+            reg_z0 <= "00000000";
+            reg_z1 <= "00000000";
+            reg_z2 <= "00000000";
+            reg_z3 <= "00000000";
         elsif receive = '1' and channel_selector = "00" then 
             reg_z0 <= i_mem_data;
         elsif receive = '1' and channel_selector = "01" then 
@@ -145,10 +142,10 @@ BEGIN
     process(i_clk)
     begin 
         if temp_done = '0' then
-            o_z0 <= zero_reg; -- <= "00000000";
-            o_z1 <= zero_reg; -- <= "00000000";
-            o_z2 <= zero_reg; -- <= "00000000";
-            o_z3 <= zero_reg; -- <= "00000000";
+            o_z0 <= "00000000";
+            o_z1 <= "00000000"; 
+            o_z2 <= "00000000"; 
+            o_z3 <= "00000000"; 
         elsif temp_done = '1' then
             o_z0 <= reg_z0;
             o_z1 <= reg_z1;
