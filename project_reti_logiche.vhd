@@ -79,26 +79,28 @@ END project_reti_logiche;
 ARCHITECTURE Behavioral OF project_reti_logiche IS
 
     SIGNAL sum_address : STD_LOGIC_VECTOR (15 DOWNTO 0);
-    SIGNAL mult_address : STD_LOGIC_VECTOR (15 DOWNTO 0);
     SIGNAL sum_channel : STD_LOGIC_VECTOR (1 DOWNTO 0);
     SIGNAL channel_selector : STD_LOGIC_VECTOR (1 DOWNTO 0);
-    SIGNAL mult_channel : STD_LOGIC_VECTOR (1 DOWNTO 0);
-    SIGNAL reg_enable : STD_LOGIC;
-    SIGNAL o_reg_z1 : STD_LOGIC_VECTOR (7 DOWNTO 0);
-    SIGNAL o_reg_z2 : STD_LOGIC_VECTOR (7 DOWNTO 0);
-    SIGNAL o_reg_z3 : STD_LOGIC_VECTOR (7 DOWNTO 0);
-    SIGNAL o_reg_z4 : STD_LOGIC_VECTOR (7 DOWNTO 0);
-
-    --Segnali di Pier (do not touch)
     SIGNAL addr_en : STD_LOGIC;
     SIGNAL chan_en : STD_LOGIC;
+    SIGNAL receive : STD_LOGIC;
+    SIGNAL internal_rst : STD_LOGIC;
+    SIGNAL temp_done : STD_LOGIC;
+    
+    SIGNAL zero_reg : STD_LOGIC_VECTOR (7 DOWNTO 0);
+    SIGNAL reg_z0 : STD_LOGIC_VECTOR (7 DOWNTO 0);
+    SIGNAL reg_z1 : STD_LOGIC_VECTOR (7 DOWNTO 0);
+    SIGNAL reg_z2 : STD_LOGIC_VECTOR (7 DOWNTO 0);
+    SIGNAL reg_z3 : STD_LOGIC_VECTOR (7 DOWNTO 0);
+
     TYPE state_type IS (S0, S1, S2, S3, S4, S5, S6);
     SIGNAL state : state_type;
     SIGNAL next_state : state_type;
-    SIGNAL receive : STD_LOGIC;
-    SIGNAL internal_rst : STD_LOGIC;
+    
 BEGIN
 
+    zero_reg <= (others => '0');
+    
     -- calcolo indirizzo, calcolo canale, output canale, output indirizzo
     PROCESS (i_clk, i_rst)
     BEGIN
@@ -119,11 +121,36 @@ BEGIN
         END IF;
     END PROCESS;
 
-    -- NON SO COME MAPPARE IL RETTANGOLO CON GLI 00, 01, 10, 11
+    -- indirizzamento data su uscita indicata in channel
+    process (i_clk)
+    begin
+        if receive = '1' and channel_selector = "00" then 
+            reg_z0 <= i_mem_data;
+        elsif receive = '1' and channel_selector = "01" then 
+            reg_z1 <= i_mem_data;
+        elsif receive = '1' and channel_selector = "10" then 
+            reg_z2 <= i_mem_data;
+        elsif receive = '1' and channel_selector = "11" then 
+            reg_z3 <= i_mem_data;
+        end if;
+    end process;
+    
 
-    -- TO DO
-    -- reg z1, z2, z3 , z4
-    -- o_z1, o_z2, o_z3, o_z4
+    -- gestione uscite con DONE
+    process(i_clk)
+    begin 
+        if temp_done = '0' then
+            o_z0 <= zero_reg;
+            o_z1 <= zero_reg;
+            o_z2 <= zero_reg;
+            o_z3 <= zero_reg;
+        elsif temp_done = '1' then
+            o_z0 <= reg_z0;
+            o_z1 <= reg_z1;
+            o_z2 <= reg_z2;
+            o_z3 <= reg_z3;
+        end if;
+    end process;
     
     PROCESS (i_clk, i_rst) -- aggiornatore FSM
     BEGIN 
@@ -167,9 +194,11 @@ BEGIN
                 receive <= '1';
                 next_state <= S6;
             when S6 => -- espone risultati, resetta addr register
-                o_done <= '1';
+                temp_done <= '1';
                 internal_rst <= '1';
                 next_state <= S0;         
         END CASE;
     END PROCESS;
+    
+    o_done <= temp_done;
 END Behavioral;
