@@ -94,8 +94,6 @@ ARCHITECTURE Behavioral OF project_reti_logiche IS
     TYPE state_type IS (S0, S1, S2, S3, S4, S5, S6);
     SIGNAL state : state_type;
     SIGNAL next_state : state_type;
-    SIGNAL receive : STD_LOGIC;
-    SIGNAL addr_rst : STD_LOGIC;
 BEGIN
 
     -- sommatore e moltiplicatore (esegue lo shift logico) per la creazione dell'indirizzo di memoria
@@ -104,9 +102,9 @@ BEGIN
     -- registro dove viene salvato l'indirizzo di memoria
     PROCESS (i_clk, i_rst)
     BEGIN
-        IF (i_rst = '1') or addr_rst = '1' THEN
+        IF (i_rst = '1') THEN
             o_mem_addr <= "0000000000000000";
-        ELSIF rising_edge(i_clk) THEN
+        ELSIF i_clk'event AND i_clk = '1' THEN
             IF (addr_en = '1') THEN
                 o_mem_addr <= sum_address;
             END IF;
@@ -133,51 +131,40 @@ BEGIN
     -- TO DO
     -- reg z1, z2, z3 , z4
     -- o_z1, o_z2, o_z3, o_z4
-    
-    PROCESS (i_clk, i_rst) -- aggiornatore FSM
-    BEGIN 
-        if i_rst = '1' then state <= S0;
-        elsif rising_edge(i_clk) then state <= next_state;
-        end if;
-    
-    END PROCESS;
-        
+
     PROCESS (i_clk, i_rst) --FSM
     BEGIN
         CASE state IS
-            when S0 =>
-                if i_start = '1' then 
-                    next_state <= S1;
-                end if;
-            when S1 => -- legge primo bit canale
-                addr_en <= '0';
-                chan_en <= '1';
-                next_state <= S2;
-            when S2 => -- legge secondo bit di indirizzo
-                addr_en <= '0';
-                chan_en <= '1';
-                if i_start = '1' then 
-                    next_state <= S3;
-                else next_state <= S4;
-                end if;
-            when S3 => -- legge indirizzo bit a bit
-                addr_en <= '1';
-                chan_en <= '0';
-                if i_start = '1' then next_state <= S3;
-                else next_state <= S4;
-                end if;
-            when S4 => -- trasmette indirizzo
-                o_mem_en <= '1';
-                addr_en <= '0';
-                chan_en <= '0';
-                next_state <= S5;
-            when S5 => -- ricevi data da memoria
-                receive <= '1';
-                next_state <= S6;
-            when S6 => -- espone risultati, resetta addr register
-                o_done <= '1';
-                addr_rst <= '1';
-                next_state <= S0;         
+                -- Se la FSM è in attesa
+            WHEN IDLE =>
+                -- current_state <= 0;
+                -- Se c'è una richiesta di scrittura
+                IF wen = '1' THEN
+                    cache_wen <= '1';
+                    next_state <= WRITE;
+                    -- Se c'è una richiesta di lettura
+                ELSIF ren = '1' THEN
+                    cache_ren <= '1';
+                    next_state <= READ;
+                END IF;
+                -- Se la FSM è in fase di scrittura
+            WHEN WRITE =>
+                -- current_state <= 1;
+                -- Se la cache ha completato la scrittura
+                IF cache_invalid = '0' THEN
+                    next_state <= IDLE;
+                ELSE
+                    invalid <= cache_invalid;
+                END IF;
+                -- Se la FSM è in fase di lettura
+            WHEN READ =>
+                -- current_state <= 2;
+                -- Se la cache ha completato la lettura
+                IF cache_invalid = '0' THEN
+                    next_state <= IDLE;
+                ELSE
+                    invalid <= cache_invalid;
+                END IF;
         END CASE;
     END PROCESS;
 END Behavioral;
