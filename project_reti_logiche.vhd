@@ -76,9 +76,10 @@ BEGIN
     BEGIN
         IF (i_rst = '1') or internal_rst = '1' THEN
             sum_address <= (others => '0');
-        ELSIF falling_edge(i_clk) and addr_en = '1' THEN
-            sum_address <= std_logic_vector(unsigned(sum_address) sll 1); -- shift logico sx del canale
-            sum_address(0) <= '1';
+        ELSIF rising_edge(i_clk) and addr_en = '1' THEN -- RISING DIOCANE SENNO NON RISPETTA I TEMPI
+            -- sum_address <= std_logic_vector(unsigned(sum_address) sll 1); -- shift logico sx del canale
+            -- sum_address(0) <= '1';
+            sum_address <= sum_address(14 downto 0) & ingresso;
         END IF;
     END PROCESS;
     
@@ -88,9 +89,10 @@ BEGIN
     BEGIN
         IF (i_rst = '1') or internal_rst = '1' THEN
             channel_selector <= (others => '0');
-        ELSIF falling_edge(i_clk) and chan_en = '1' THEN
-            channel_selector <= std_logic_vector(unsigned(channel_selector) sll 1); -- shift logico sx del canale
-            channel_selector(0) <= '1';
+        ELSIF rising_edge(i_clk) and chan_en = '1' THEN
+            -- channel_selector <= std_logic_vector(unsigned(channel_selector) sll 1); -- shift logico sx del canale
+            -- channel_selector(0) <= '1';
+            channel_selector <= channel_selector(0) & ingresso;
         END IF;
     END PROCESS;
 
