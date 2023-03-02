@@ -25,38 +25,6 @@ USE IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 -- use IEEE.STD_LOGIC_UNSIGNED.all;
 
--- Uncomment the following library declaration if instantiating
--- any Xilinx leaf cells in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
--- DATAPATH in
--- i_clk
--- i_res
--- address_enable
--- channel_enable
--- done
--- receive
--- i_w
--- i_mem_data
-
--- DATAPATH out
--- o_mem_address
--- o_z1
--- o_z2
--- o_z3
--- o_z4
-
--- DATAPATH internal
--- sum_address
--- mult_address
--- sum_channel
--- channel_selector
--- mult_channel
--- reg_enable
--- o_reg_z1
--- o_reg_z2
--- o_reg_z3
--- o_reg_z4
 
 ENTITY project_reti_logiche IS
     PORT (
@@ -102,15 +70,18 @@ BEGIN
     PROCESS (i_clk, i_rst)
     BEGIN
         IF (i_rst = '1') or internal_rst = '1' THEN
-            channel_selector <= (others => '0');
             o_mem_addr <= (others => '0');
-        ELSIF rising_edge(i_clk) and chan_en = '1' THEN
-            sum_channel <= ("0" & i_w); 
-            if state = S1 then
-                sum_channel <= std_logic_vector(unsigned(sum_channel) sll 1); -- shift logico sx del canale
-            else
-                channel_selector <= sum_channel;
-            end if;
+        ELSIF rising_edge(i_clk) and addr_en = '1' THEN
+            sum_address <= std_logic_vector(unsigned(sum_address) sll 1); -- shift logico sx del canale
+            sum_address(0) <= i_w;
+            o_mem_addr <= sum_address;
+        END IF;
+    END PROCESS;
+
+    PROCESS (i_clk, i_rst)
+    BEGIN
+        IF (i_rst = '1') or internal_rst = '1' THEN
+            o_mem_addr <= (others => '0');
         ELSIF rising_edge(i_clk) and addr_en = '1' THEN
             sum_address <= std_logic_vector(unsigned(sum_address) sll 1); -- shift logico sx del canale
             sum_address(0) <= i_w;
@@ -178,14 +149,12 @@ BEGIN
             when S2 => -- legge secondo bit di indirizzo
                 addr_en <= '0';
                 chan_en <= '1';
-                if i_start = '1' then 
-                    next_state <= S3;
-                else next_state <= S4;
-                end if;
+                next_state <= S3;
             when S3 => -- legge indirizzo bit a bit
-                addr_en <= '1';
-                chan_en <= '0';
-                if i_start = '1' then next_state <= S3;
+                if i_start = '1' then 
+                    addr_en <= '1';
+                    chan_en <= '0';
+                    next_state <= S3;
                 else next_state <= S4;
                 end if;
             when S4 => -- trasmette indirizzo
