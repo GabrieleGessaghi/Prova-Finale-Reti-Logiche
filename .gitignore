@@ -7,3 +7,4 @@ testbench/tb_2.vhd
 testformat.vhd
 testbench/tb_3.vhd
 testbench/tb_5.vhd
+testbench/tb_example23.vhd

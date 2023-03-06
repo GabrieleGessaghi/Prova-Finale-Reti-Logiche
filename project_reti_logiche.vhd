@@ -230,5 +230,3 @@ BEGIN
     
     o_done <= temp_done;
 END Behavioral;
-
-
