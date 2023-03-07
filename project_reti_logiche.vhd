@@ -165,7 +165,6 @@ BEGIN
         end if;
     
     END PROCESS;
-    
    -- process( i_clk)
    -- begin
         -- if rising_edge(i_clk) then o_done <= temp_done; end if;
