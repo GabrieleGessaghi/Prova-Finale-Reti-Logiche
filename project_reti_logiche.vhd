@@ -109,9 +109,8 @@ BEGIN
             reg_z1 <= "00000000";
             reg_z2 <= "00000000";
             reg_z3 <= "00000000";
-        else 
-            --if receive = '1' then
-                if ch0_en = '1' then 
+        elsif rising_edge(i_clk) then
+            if ch0_en = '1' then 
                     reg_z0 <= i_mem_data;
                 end if; 
                 if ch1_en = '1' then 
@@ -123,7 +122,6 @@ BEGIN
                 if ch3_en = '1' then 
                     reg_z3 <= i_mem_data;
                 end if;
-            --end if;
         end if;
     end process;
     
@@ -147,16 +145,16 @@ BEGIN
     -- gestione uscite con DONE
     process(i_clk, temp_done)
     begin 
-        if temp_done = '0' then
-            o_z0 <= "00000000";
-            o_z1 <= "00000000"; 
-            o_z2 <= "00000000"; 
-            o_z3 <= "00000000"; 
-        elsif temp_done = '1' then
+        if temp_done = '1' then
             o_z0 <= reg_z0;
             o_z1 <= reg_z1;
             o_z2 <= reg_z2;
             o_z3 <= reg_z3;
+        else
+            o_z0 <= "00000000";
+            o_z1 <= "00000000"; 
+            o_z2 <= "00000000"; 
+            o_z3 <= "00000000"; 
         end if;
     end process;
     
@@ -167,6 +165,11 @@ BEGIN
         end if;
     
     END PROCESS;
+    
+   -- process( i_clk)
+   -- begin
+        -- if rising_edge(i_clk) then o_done <= temp_done; end if;
+   -- end process;
         
     PROCESS (i_clk, i_rst) --FSM
     BEGIN
@@ -191,6 +194,7 @@ BEGIN
                 o_mem_en <= '1';
             when S5 => -- ricevi data da memoria
                 receive <= '1';
+                --temp_done <= '1';
             when S6 => -- espone risultati, resetta addr register
                 temp_done <= '1';
                 internal_rst <= '1';
